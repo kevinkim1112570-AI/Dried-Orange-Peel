@@ -10,6 +10,7 @@
     --accent:#e8772e; --accent-dark:#c9621f; --accent-soft:#fcefe4;
   }
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
   body{margin:0;background:var(--bg);color:var(--ink);
     font:18px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
   .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 80px}
@@ -17,7 +18,9 @@
   h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.5px}
   h1 span{color:var(--accent)}
   .sub{color:var(--muted);font-size:16px;margin-top:2px}
-  .tools{display:flex;gap:10px;flex-wrap:wrap}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .who{color:var(--muted);font-size:15px}
+  .badge{display:inline-block;background:var(--accent-soft);color:var(--accent-dark);font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;margin-left:6px}
   button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 18px;transition:.15s}
   button:hover{border-color:var(--accent);color:var(--accent-dark)}
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
@@ -28,7 +31,7 @@
 
   .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:24px}
   .panel h2{margin:0 0 16px;font-size:20px}
-  form{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+  form.stock{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
   label{display:flex;flex-direction:column;gap:6px;font-size:15px;color:var(--muted)}
   input,textarea{font:inherit;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfaf8;outline:none;width:100%}
   input:focus,textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
@@ -38,12 +41,17 @@
   textarea{min-height:76px;resize:vertical}
   .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
 
+  .login{max-width:420px;margin:60px auto}
+  .login form{display:flex;flex-direction:column;gap:14px}
+  .msg{font-size:15px;color:#b3412a;min-height:22px}
+  .notice{background:var(--accent-soft);border:1px solid #f4d9c3;border-radius:14px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:16px}
+
   .bar{display:flex;gap:14px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
   .bar input{max-width:360px}
   .count{color:var(--muted);font-size:16px}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
   .card:hover{box-shadow:0 6px 22px rgba(60,40,10,.07)}
   .code{align-self:flex-start;background:var(--accent-soft);color:var(--accent-dark);font-weight:700;font-size:15px;padding:3px 12px;border-radius:999px;letter-spacing:.5px}
   .name{font-size:24px;font-weight:700;line-height:1.25;margin:2px 0}
@@ -66,7 +74,7 @@
   .lb-fail a{color:var(--accent-dark)}
 
   @media(max-width:720px){
-    form{grid-template-columns:repeat(2,1fr)}
+    form.stock{grid-template-columns:repeat(2,1fr)}
     .f-code,.f-weight,.f-year{grid-column:span 1}.f-name,.f-detail,.f-pic,.actions{grid-column:span 2}
     h1{font-size:28px}
   }
@@ -77,37 +85,56 @@
   <header>
     <div>
       <h1><span>橙皮</span> Stock List</h1>
-      <div class="sub">Liquid stock register · saved in this browser</div>
+      <div class="sub">Liquid stock register · live team data</div>
     </div>
-    <div class="tools">
+    <div class="tools" id="tools" hidden>
+      <span class="who" id="who"></span>
       <button id="exportBtn" class="small">Export</button>
-      <button id="importBtn" class="small">Import</button>
-      <input type="file" id="importFile" accept="application/json" hidden>
+      <button id="signOutBtn" class="small">Sign out</button>
     </div>
   </header>
 
-  <section class="panel">
-    <h2 id="formTitle">Add new item</h2>
-    <form id="form" autocomplete="off">
-      <label class="f-code">Code<input id="code" readonly></label>
-      <label class="f-name">Name<input id="name" required placeholder="e.g. 橙皮糖浆 Orange Peel Syrup"></label>
-      <label class="f-weight">Weight<input id="weight" placeholder="e.g. 700 ml"></label>
-      <label class="f-year">Particular Year<input id="year" placeholder="e.g. 2021"></label>
-      <label class="f-detail">Detail<textarea id="detail" placeholder="Notes, origin, batch, condition…"></textarea></label>
-      <label class="f-pic">Picture Link<input id="pic" type="url" placeholder="https://…"></label>
-      <div class="actions">
-        <button type="button" id="cancelBtn" hidden>Cancel</button>
-        <button type="submit" class="primary" id="saveBtn">Add item</button>
-      </div>
+  <!-- Login -->
+  <section class="panel login" id="loginView">
+    <h2>Team sign in</h2>
+    <form id="loginForm">
+      <label>Email<input id="email" type="email" required autocomplete="username"></label>
+      <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
+      <div class="msg" id="loginMsg"></div>
+      <button class="primary" type="submit" id="loginBtn">Sign in</button>
     </form>
   </section>
 
-  <div class="bar">
-    <input id="search" type="search" placeholder="Search code, name, year, detail…">
-    <span class="count" id="count"></span>
-  </div>
+  <!-- App -->
+  <div id="appView" hidden>
+    <div class="notice" id="localNotice" hidden>
+      <span id="localNoticeText"></span>
+      <button class="small primary" id="migrateBtn">Upload to team list</button>
+    </div>
 
-  <div class="grid" id="list"></div>
+    <section class="panel" id="formPanel">
+      <h2 id="formTitle">Add new item</h2>
+      <form class="stock" id="form" autocomplete="off">
+        <label class="f-code">Code<input id="code" readonly placeholder="Auto"></label>
+        <label class="f-name">Name<input id="name" required placeholder="e.g. 橙皮糖浆 Orange Peel Syrup"></label>
+        <label class="f-weight">Weight<input id="weight" placeholder="e.g. 700 ml"></label>
+        <label class="f-year">Particular Year<input id="year" placeholder="e.g. 2021"></label>
+        <label class="f-detail">Detail<textarea id="detail" placeholder="Notes, origin, batch, condition…"></textarea></label>
+        <label class="f-pic">Picture Link<input id="pic" type="url" placeholder="https://…"></label>
+        <div class="actions">
+          <div class="msg" id="formMsg" style="margin-right:auto"></div>
+          <button type="button" id="cancelBtn" hidden>Cancel</button>
+          <button type="submit" class="primary" id="saveBtn">Add item</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="bar">
+      <input id="search" type="search" placeholder="Search code, name, year, detail…">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="grid" id="list"></div>
+  </div>
 </div>
 
 <div class="lightbox" id="lb">
@@ -117,45 +144,70 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const KEY = 'orange_peel_stock_v1';
+const SUPABASE_URL = 'https://mhdxkwmjrquvvzpwolxx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7LJzFZ-twiuUF6olOZj0dQ_ygO5jcQm';
+const TABLE = 'orange_peel_stock';
+const LEGACY_KEY = 'orange_peel_stock_v1';   // old local-storage data
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 let items = [];
-let editingCode = null;
+let editingId = null;
+let canEdit = false;
+let channel = null;
 
-function load(){
-  try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ items = []; }
-}
-function save(){
-  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch(e){ alert('Could not save to local storage.'); }
-}
-function nextCode(){
-  const max = items.reduce((m,i)=>{
-    const n = parseInt(String(i.code).replace(/\D/g,''),10);
-    return isNaN(n) ? m : Math.max(m,n);
-  },0);
-  return 'OP' + String(max+1).padStart(3,'0');
-}
-function esc(s){ return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function safeUrl(u){
-  try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch(e){ return ''; }
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function safeUrl(u){ try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch(e){ return ''; } }
+function legacyItems(){
+  try { const a = JSON.parse(localStorage.getItem(LEGACY_KEY)); return Array.isArray(a) ? a : []; } catch(e){ return []; }
 }
 
-function resetForm(){
-  editingCode = null;
-  $('form').reset();
-  $('code').value = nextCode();
-  $('formTitle').textContent = 'Add new item';
-  $('saveBtn').textContent = 'Add item';
-  $('cancelBtn').hidden = true;
+/* ---------- auth ---------- */
+async function showForSession(session){
+  if(!session){
+    $('loginView').hidden = false; $('appView').hidden = true; $('tools').hidden = true;
+    if(channel){ sb.removeChannel(channel); channel = null; }
+    return;
+  }
+  $('loginView').hidden = true; $('appView').hidden = false; $('tools').hidden = false;
+  const { data: ce } = await sb.rpc('can_edit');
+  canEdit = ce === true;
+  $('who').innerHTML = esc(session.user.email) + `<span class="badge">${canEdit ? 'Can edit' : 'View only'}</span>`;
+  $('formPanel').hidden = !canEdit;
+  resetForm();
+  await load();
+  checkLegacy();
+  if(!channel){
+    channel = sb.channel('orange-peel').on('postgres_changes',{event:'*',schema:'public',table:TABLE},()=>load()).subscribe();
+  }
 }
+$('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  $('loginMsg').textContent = ''; $('loginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  $('loginBtn').disabled = false;
+  if(error) $('loginMsg').textContent = error.message;
+});
+$('signOutBtn').addEventListener('click', ()=> sb.auth.signOut());
+sb.auth.onAuthStateChange((evt, session)=>{
+  if(evt === 'INITIAL_SESSION' || evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') setTimeout(()=>showForSession(session),0);
+});
 
+/* ---------- data ---------- */
+async function load(){
+  const { data, error } = await sb.from(TABLE).select('*').order('code',{ascending:true});
+  if(error){ $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">Could not load data: ${esc(error.message)}</div>`; return; }
+  items = data.sort((a,b)=>a.code.localeCompare(b.code,undefined,{numeric:true}));
+  render();
+}
 function render(){
   const q = $('search').value.trim().toLowerCase();
   const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.detail].join(' ').toLowerCase().includes(q));
   $('count').textContent = `${shown.length} of ${items.length} items`;
   if(!shown.length){
-    $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet. Add your first item above.'}</div>`;
+    $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet.' + (canEdit ? ' Add your first item above.' : '')}</div>`;
     return;
   }
   $('list').innerHTML = shown.map(i => `
@@ -168,62 +220,74 @@ function render(){
       </div>
       <div class="detail">${esc(i.detail)}</div>
       <div class="row">
-        <button class="small primary" data-act="pic" data-code="${esc(i.code)}" ${safeUrl(i.pic)?'':'disabled'}>Pic</button>
+        <button class="small primary" data-act="pic" data-id="${i.id}" ${safeUrl(i.pic_url)?'':'disabled'}>Pic</button>
         <span class="spacer"></span>
-        <button class="small" data-act="edit" data-code="${esc(i.code)}">Edit</button>
-        <button class="small" data-act="del" data-code="${esc(i.code)}">Delete</button>
+        ${canEdit ? `<button class="small" data-act="edit" data-id="${i.id}">Edit</button>
+        <button class="small" data-act="del" data-id="${i.id}">Delete</button>` : ''}
       </div>
     </article>`).join('');
 }
 
-$('form').addEventListener('submit', e=>{
+function resetForm(){
+  editingId = null;
+  $('form').reset();
+  $('code').value = '';
+  $('formMsg').textContent = '';
+  $('formTitle').textContent = 'Add new item';
+  $('saveBtn').textContent = 'Add item';
+  $('cancelBtn').hidden = true;
+}
+
+$('form').addEventListener('submit', async e=>{
   e.preventDefault();
   const rec = {
-    code: editingCode || nextCode(),
     name: $('name').value.trim(),
     weight: $('weight').value.trim(),
     year: $('year').value.trim(),
     detail: $('detail').value.trim(),
-    pic: $('pic').value.trim()
+    pic_url: $('pic').value.trim()
   };
   if(!rec.name) return;
-  if(editingCode){
-    items = items.map(i => i.code === editingCode ? rec : i);
-  } else {
-    items.push(rec);
-  }
-  save(); resetForm(); render();
+  $('saveBtn').disabled = true; $('formMsg').textContent = '';
+  const { error } = editingId
+    ? await sb.from(TABLE).update(rec).eq('id', editingId)
+    : await sb.from(TABLE).insert(rec);
+  $('saveBtn').disabled = false;
+  if(error){ $('formMsg').textContent = error.message; return; }
+  resetForm(); load();
 });
 $('cancelBtn').addEventListener('click', resetForm);
 $('search').addEventListener('input', render);
 
-$('list').addEventListener('click', e=>{
+$('list').addEventListener('click', async e=>{
   const b = e.target.closest('button[data-act]'); if(!b) return;
-  const it = items.find(i => i.code === b.dataset.code); if(!it) return;
+  const it = items.find(i => i.id === b.dataset.id); if(!it) return;
   if(b.dataset.act === 'pic') openPic(it);
   if(b.dataset.act === 'edit'){
-    editingCode = it.code;
+    editingId = it.id;
     $('code').value = it.code; $('name').value = it.name; $('weight').value = it.weight;
-    $('year').value = it.year; $('detail').value = it.detail; $('pic').value = it.pic;
+    $('year').value = it.year; $('detail').value = it.detail; $('pic').value = it.pic_url;
     $('formTitle').textContent = 'Edit ' + it.code;
     $('saveBtn').textContent = 'Save changes';
     $('cancelBtn').hidden = false;
     window.scrollTo({top:0,behavior:'smooth'});
   }
   if(b.dataset.act === 'del' && confirm(`Delete ${it.code} · ${it.name}?`)){
-    items = items.filter(i => i.code !== it.code);
-    save();
-    if(editingCode === it.code) resetForm(); else $('code').value = editingCode || nextCode();
-    render();
+    const { error } = await sb.from(TABLE).delete().eq('id', it.id);
+    if(error){ alert(error.message); return; }
+    if(editingId === it.id) resetForm();
+    load();
   }
 });
 
+/* ---------- picture preview ---------- */
 function openPic(it){
-  const url = safeUrl(it.pic);
+  const url = safeUrl(it.pic_url);
   $('lbTitle').textContent = `${it.code} · ${it.name}`;
   $('lbBody').innerHTML = `<img alt="${esc(it.name)}" src="${esc(url)}">`;
-  const img = $('lbBody').querySelector('img');
-  img.onerror = () => { $('lbBody').innerHTML = `<div class="lb-fail">Preview unavailable for this link.<br><a href="${esc(url)}" target="_blank" rel="noopener">Open link in new tab ↗</a></div>`; };
+  $('lbBody').querySelector('img').onerror = () => {
+    $('lbBody').innerHTML = `<div class="lb-fail">Preview unavailable for this link.<br><a href="${esc(url)}" target="_blank" rel="noopener">Open link in new tab ↗</a></div>`;
+  };
   $('lb').classList.add('open');
 }
 function closeLb(){ $('lb').classList.remove('open'); $('lbBody').innerHTML=''; }
@@ -231,31 +295,39 @@ $('lbClose').addEventListener('click', closeLb);
 $('lb').addEventListener('click', e=>{ if(e.target === $('lb')) closeLb(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLb(); });
 
-// Export / Import (share data between team browsers)
+/* ---------- export ---------- */
 $('exportBtn').addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const out = items.map(({code,name,weight,year,detail,pic_url})=>({code,name,weight,year,detail,pic:pic_url}));
+  const blob = new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'orange-peel-stock-' + new Date().toISOString().slice(0,10) + '.json';
   a.click(); URL.revokeObjectURL(a.href);
 });
-$('importBtn').addEventListener('click', ()=> $('importFile').click());
-$('importFile').addEventListener('change', e=>{
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const data = JSON.parse(r.result);
-      if(!Array.isArray(data)) throw 0;
-      if(!confirm(`Replace current ${items.length} items with ${data.length} imported items?`)) return;
-      items = data.map(d=>({code:String(d.code||''),name:String(d.name||''),weight:String(d.weight||''),year:String(d.year||''),detail:String(d.detail||''),pic:String(d.pic||'')}));
-      save(); resetForm(); render();
-    } catch(err){ alert('Invalid file.'); }
-  };
-  r.readAsText(f); e.target.value='';
-});
 
-load(); resetForm(); render();
+/* ---------- one-time migration of old local-storage data ---------- */
+function checkLegacy(){
+  const old = legacyItems();
+  const show = canEdit && old.length > 0;
+  $('localNotice').hidden = !show;
+  if(show) $('localNoticeText').textContent = `Found ${old.length} item(s) saved in this browser from the old version. Upload them to the shared team list?`;
+}
+$('migrateBtn').addEventListener('click', async ()=>{
+  const old = legacyItems();
+  if(!old.length) return;
+  $('migrateBtn').disabled = true;
+  for(const d of old){      // one by one so codes are numbered in order
+    const { error } = await sb.from(TABLE).insert({
+      name: String(d.name||'').trim() || '(no name)',
+      weight: String(d.weight||''), year: String(d.year||''),
+      detail: String(d.detail||''), pic_url: safeUrl(d.pic||'')
+    });
+    if(error){ alert('Upload stopped: ' + error.message); $('migrateBtn').disabled = false; await load(); return; }
+  }
+  localStorage.removeItem(LEGACY_KEY);
+  $('migrateBtn').disabled = false;
+  checkLegacy(); load();
+});
 </script>
 </body>
 </html>
