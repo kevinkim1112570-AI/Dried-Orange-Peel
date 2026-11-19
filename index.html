@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>橙皮 Stock List</title>
+<style>
+  :root{
+    --bg:#f4f2ee; --card:#ffffff; --ink:#2b2a28; --muted:#8a867e; --line:#e6e2da;
+    --accent:#e8772e; --accent-dark:#c9621f; --accent-soft:#fcefe4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:18px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 80px}
+  header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+  h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.5px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:16px;margin-top:2px}
+  .tools{display:flex;gap:10px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 18px;transition:.15s}
+  button:hover{border-color:var(--accent);color:var(--accent-dark)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+  button.small{padding:6px 14px;font-size:15px}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button:disabled:hover{border-color:var(--line);color:var(--ink)}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:24px}
+  .panel h2{margin:0 0 16px;font-size:20px}
+  form{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+  label{display:flex;flex-direction:column;gap:6px;font-size:15px;color:var(--muted)}
+  input,textarea{font:inherit;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfaf8;outline:none;width:100%}
+  input:focus,textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  input[readonly]{color:var(--accent-dark);font-weight:700;background:var(--accent-soft);border-color:var(--accent-soft)}
+  .f-code{grid-column:span 1}.f-name{grid-column:span 3}.f-weight{grid-column:span 1}.f-year{grid-column:span 1}
+  .f-detail{grid-column:span 6}.f-pic{grid-column:span 6}
+  textarea{min-height:76px;resize:vertical}
+  .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
+
+  .bar{display:flex;gap:14px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .bar input{max-width:360px}
+  .count{color:var(--muted);font-size:16px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+  .card:hover{box-shadow:0 6px 22px rgba(60,40,10,.07)}
+  .code{align-self:flex-start;background:var(--accent-soft);color:var(--accent-dark);font-weight:700;font-size:15px;padding:3px 12px;border-radius:999px;letter-spacing:.5px}
+  .name{font-size:24px;font-weight:700;line-height:1.25;margin:2px 0}
+  .meta{display:flex;gap:22px}
+  .meta div{display:flex;flex-direction:column}
+  .meta small{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.8px}
+  .meta b{font-size:20px;font-weight:600}
+  .detail{color:#55524c;font-size:16px;white-space:pre-wrap;flex:1}
+  .row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .row .spacer{flex:1}
+  .empty{text-align:center;color:var(--muted);padding:60px 0;border:1px dashed var(--line);border-radius:18px}
+
+  .lightbox{position:fixed;inset:0;background:rgba(30,28,25,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+  .lightbox.open{display:flex}
+  .lb-box{background:#fff;border-radius:18px;padding:18px;max-width:640px;width:100%;max-height:92vh;overflow:auto}
+  .lb-box img{width:100%;border-radius:12px;display:block}
+  .lb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  .lb-head b{font-size:20px}
+  .lb-fail{color:var(--muted);padding:20px 0}
+  .lb-fail a{color:var(--accent-dark)}
+
+  @media(max-width:720px){
+    form{grid-template-columns:repeat(2,1fr)}
+    .f-code,.f-weight,.f-year{grid-column:span 1}.f-name,.f-detail,.f-pic,.actions{grid-column:span 2}
+    h1{font-size:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span>橙皮</span> Stock List</h1>
+      <div class="sub">Liquid stock register · saved in this browser</div>
+    </div>
+    <div class="tools">
+      <button id="exportBtn" class="small">Export</button>
+      <button id="importBtn" class="small">Import</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2 id="formTitle">Add new item</h2>
+    <form id="form" autocomplete="off">
+      <label class="f-code">Code<input id="code" readonly></label>
+      <label class="f-name">Name<input id="name" required placeholder="e.g. 橙皮糖浆 Orange Peel Syrup"></label>
+      <label class="f-weight">Weight<input id="weight" placeholder="e.g. 700 ml"></label>
+      <label class="f-year">Particular Year<input id="year" placeholder="e.g. 2021"></label>
+      <label class="f-detail">Detail<textarea id="detail" placeholder="Notes, origin, batch, condition…"></textarea></label>
+      <label class="f-pic">Picture Link<input id="pic" type="url" placeholder="https://…"></label>
+      <div class="actions">
+        <button type="button" id="cancelBtn" hidden>Cancel</button>
+        <button type="submit" class="primary" id="saveBtn">Add item</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="bar">
+    <input id="search" type="search" placeholder="Search code, name, year, detail…">
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="grid" id="list"></div>
+</div>
+
+<div class="lightbox" id="lb">
+  <div class="lb-box">
+    <div class="lb-head"><b id="lbTitle"></b><button class="small" id="lbClose">Close</button></div>
+    <div id="lbBody"></div>
+  </div>
+</div>
+
+<script>
+const KEY = 'orange_peel_stock_v1';
+const $ = id => document.getElementById(id);
+let items = [];
+let editingCode = null;
+
+function load(){
+  try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ items = []; }
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch(e){ alert('Could not save to local storage.'); }
+}
+function nextCode(){
+  const max = items.reduce((m,i)=>{
+    const n = parseInt(String(i.code).replace(/\D/g,''),10);
+    return isNaN(n) ? m : Math.max(m,n);
+  },0);
+  return 'OP' + String(max+1).padStart(3,'0');
+}
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function safeUrl(u){
+  try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch(e){ return ''; }
+}
+
+function resetForm(){
+  editingCode = null;
+  $('form').reset();
+  $('code').value = nextCode();
+  $('formTitle').textContent = 'Add new item';
+  $('saveBtn').textContent = 'Add item';
+  $('cancelBtn').hidden = true;
+}
+
+function render(){
+  const q = $('search').value.trim().toLowerCase();
+  const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.detail].join(' ').toLowerCase().includes(q));
+  $('count').textContent = `${shown.length} of ${items.length} items`;
+  if(!shown.length){
+    $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet. Add your first item above.'}</div>`;
+    return;
+  }
+  $('list').innerHTML = shown.map(i => `
+    <article class="card">
+      <span class="code">${esc(i.code)}</span>
+      <div class="name">${esc(i.name)}</div>
+      <div class="meta">
+        <div><small>Weight</small><b>${esc(i.weight) || '—'}</b></div>
+        <div><small>Year</small><b>${esc(i.year) || '—'}</b></div>
+      </div>
+      <div class="detail">${esc(i.detail)}</div>
+      <div class="row">
+        <button class="small primary" data-act="pic" data-code="${esc(i.code)}" ${safeUrl(i.pic)?'':'disabled'}>Pic</button>
+        <span class="spacer"></span>
+        <button class="small" data-act="edit" data-code="${esc(i.code)}">Edit</button>
+        <button class="small" data-act="del" data-code="${esc(i.code)}">Delete</button>
+      </div>
+    </article>`).join('');
+}
+
+$('form').addEventListener('submit', e=>{
+  e.preventDefault();
+  const rec = {
+    code: editingCode || nextCode(),
+    name: $('name').value.trim(),
+    weight: $('weight').value.trim(),
+    year: $('year').value.trim(),
+    detail: $('detail').value.trim(),
+    pic: $('pic').value.trim()
+  };
+  if(!rec.name) return;
+  if(editingCode){
+    items = items.map(i => i.code === editingCode ? rec : i);
+  } else {
+    items.push(rec);
+  }
+  save(); resetForm(); render();
+});
+$('cancelBtn').addEventListener('click', resetForm);
+$('search').addEventListener('input', render);
+
+$('list').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const it = items.find(i => i.code === b.dataset.code); if(!it) return;
+  if(b.dataset.act === 'pic') openPic(it);
+  if(b.dataset.act === 'edit'){
+    editingCode = it.code;
+    $('code').value = it.code; $('name').value = it.name; $('weight').value = it.weight;
+    $('year').value = it.year; $('detail').value = it.detail; $('pic').value = it.pic;
+    $('formTitle').textContent = 'Edit ' + it.code;
+    $('saveBtn').textContent = 'Save changes';
+    $('cancelBtn').hidden = false;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if(b.dataset.act === 'del' && confirm(`Delete ${it.code} · ${it.name}?`)){
+    items = items.filter(i => i.code !== it.code);
+    save();
+    if(editingCode === it.code) resetForm(); else $('code').value = editingCode || nextCode();
+    render();
+  }
+});
+
+function openPic(it){
+  const url = safeUrl(it.pic);
+  $('lbTitle').textContent = `${it.code} · ${it.name}`;
+  $('lbBody').innerHTML = `<img alt="${esc(it.name)}" src="${esc(url)}">`;
+  const img = $('lbBody').querySelector('img');
+  img.onerror = () => { $('lbBody').innerHTML = `<div class="lb-fail">Preview unavailable for this link.<br><a href="${esc(url)}" target="_blank" rel="noopener">Open link in new tab ↗</a></div>`; };
+  $('lb').classList.add('open');
+}
+function closeLb(){ $('lb').classList.remove('open'); $('lbBody').innerHTML=''; }
+$('lbClose').addEventListener('click', closeLb);
+$('lb').addEventListener('click', e=>{ if(e.target === $('lb')) closeLb(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLb(); });
+
+// Export / Import (share data between team browsers)
+$('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'orange-peel-stock-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+});
+$('importBtn').addEventListener('click', ()=> $('importFile').click());
+$('importFile').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      if(!Array.isArray(data)) throw 0;
+      if(!confirm(`Replace current ${items.length} items with ${data.length} imported items?`)) return;
+      items = data.map(d=>({code:String(d.code||''),name:String(d.name||''),weight:String(d.weight||''),year:String(d.year||''),detail:String(d.detail||''),pic:String(d.pic||'')}));
+      save(); resetForm(); render();
+    } catch(err){ alert('Invalid file.'); }
+  };
+  r.readAsText(f); e.target.value='';
+});
+
+load(); resetForm(); render();
+</script>
+</body>
+</html>
