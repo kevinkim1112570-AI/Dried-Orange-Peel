@@ -47,6 +47,10 @@
   textarea{min-height:76px;resize:vertical}
   .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
 
+  body.bg-login{background:#fdf1e2 url('/icons/login-bg.jpg') center/cover no-repeat fixed}
+  body.bg-login header{display:none}
+  body.bg-login .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px}
+  body.bg-login .login{margin:0;width:100%;box-shadow:0 12px 40px rgba(120,70,20,.15)}
   .login{max-width:420px;margin:50px auto}
   .login h2{font-size:28px}
   .login .lead{color:var(--muted);margin:-6px 0 18px}
@@ -109,7 +113,7 @@
   }
 </style>
 </head>
-<body>
+<body class="bg-login">
 <div class="wrap">
   <header>
     <div>
@@ -255,6 +259,7 @@ function show(v){
   $('adminView').hidden = v !== 'admin';
   $('tools').hidden = v !== 'app';
   if(v !== 'app') $('roTag').hidden = true;
+  document.body.classList.toggle('bg-login', v === 'login');
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
