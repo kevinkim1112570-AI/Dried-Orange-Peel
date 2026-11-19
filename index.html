@@ -147,6 +147,7 @@
   /* print: wrapper is invisible on screen */
   table.pw,table.pw thead,table.pw tbody,table.pw tr,table.pw td{display:block;border:0;padding:0}
   .ph{display:none}
+  .pmeta{font-size:12px;font-weight:400;color:#555;text-align:right}
   @media print{
     @page{size:A4;margin:12mm}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -159,7 +160,7 @@
     table.pw tbody{display:table-row-group}
     table.pw tr{display:table-row}
     table.pw td{display:table-cell}
-    .ph{display:block;font-size:22px;font-weight:700;padding:0 0 8px;margin-bottom:10px;border-bottom:2px solid var(--accent)}
+    .ph{display:flex;justify-content:space-between;align-items:flex-end;font-size:22px;font-weight:700;padding:0 0 8px;margin-bottom:10px;border-bottom:2px solid var(--accent)}
     .ph span{color:var(--accent)}
     .grid{display:block}
     .card{display:inline-flex;width:31.8%;margin:0 1% 12px 0;vertical-align:top;box-shadow:none;padding:12px;border-radius:10px;
@@ -271,7 +272,7 @@
       <span class="count" id="count"></span>
     </div>
     <table class="pw">
-      <thead><tr><td><div class="ph"><span>橙皮</span> Stock List</div></td></tr></thead>
+      <thead><tr><td><div class="ph"><div><span>橙皮</span> Stock List</div><div class="pmeta" id="printMeta"></div></div></td></tr></thead>
       <tbody><tr><td><div class="grid" id="list"></div></td></tr></tbody>
     </table>
   </div>
@@ -339,6 +340,7 @@ let editingId = null;
 let canEdit = false;
 let channel = null;
 let adminOpen = false;
+let userEmail = '';
 let adminPw = '';
 function show(v){
   $('loginView').hidden = v !== 'login';
@@ -375,6 +377,7 @@ async function showForSession(session){
     return;
   }
   canEdit = role === 'edit';
+  userEmail = session.user.email;
   adminOpen = false; show('app');
   $('roTag').hidden = canEdit;
   $('who').innerHTML = esc(session.user.email) + `${canEdit ? '' : '<span class="badge">Read Only</span>'}`;
@@ -658,6 +661,10 @@ $('recExport').addEventListener('click', ()=>{
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download = 'stock-modification-record-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click(); URL.revokeObjectURL(a.href);
+});
+
+window.addEventListener('beforeprint', ()=>{
+  $('printMeta').textContent = 'Printed by ' + userEmail + ' · ' + fmtDate(new Date().toISOString());
 });
 
 /* ---------- export ---------- */
