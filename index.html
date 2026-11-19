@@ -43,8 +43,31 @@
   textarea{min-height:76px;resize:vertical}
   .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
 
-  .login{max-width:420px;margin:60px auto}
-  .login form{display:flex;flex-direction:column;gap:14px}
+  .login{max-width:420px;margin:50px auto}
+  .login h2{font-size:28px}
+  .login .lead{color:var(--muted);margin:-6px 0 18px}
+  .login form,.col-form{display:flex;flex-direction:column;gap:14px}
+  .linkrow{display:flex;justify-content:space-around;margin-top:18px}
+  .link{background:none;border:none;padding:4px;color:var(--accent-dark);text-decoration:underline;font-size:17px;border-radius:6px}
+  .link:hover{color:var(--ink)}
+  .pw-wrap{position:relative;display:block}
+  .pw-wrap input{padding-right:50px}
+  .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;padding:0;border:none;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
+  .eye:hover,.eye:active{color:var(--accent-dark);border:none}
+  .eye svg{width:24px;height:24px;pointer-events:none}
+  #roTag{color:#d33a2c;font-size:.33em;font-weight:600;letter-spacing:0;margin-left:6px;white-space:nowrap}
+  .admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px}
+  .admin-head h2{margin:0}
+  table.acct{width:100%;border-collapse:collapse;font-size:17px}
+  table.acct th{text-align:center;padding:10px 8px;border-bottom:2px solid var(--ink);font-weight:700}
+  table.acct td{text-align:center;padding:12px 8px;border-bottom:1px solid var(--line)}
+  table.acct th:first-child,table.acct td:first-child{text-align:left}
+  table.acct input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);pointer-events:none}
+  .scroll-x{overflow-x:auto}
+  .radios{display:flex;gap:22px;flex-wrap:wrap}
+  .radios label{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:17px}
+  .radios input{width:auto}
+  .modal-box.narrow{max-width:440px}
   .msg{font-size:15px;color:#b3412a;min-height:22px}
   .notice{background:var(--accent-soft);border:1px solid #f4d9c3;border-radius:14px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:16px}
 
@@ -86,7 +109,7 @@
 <div class="wrap">
   <header>
     <div>
-      <h1><span>橙皮</span> Stock List</h1>
+      <h1><span>橙皮</span> Stock List<span id="roTag" hidden>(Read Only)</span></h1>
       <div class="sub">Liquid stock register · live team data</div>
     </div>
     <div class="tools" id="tools" hidden>
@@ -99,13 +122,30 @@
 
   <!-- Login -->
   <section class="panel login" id="loginView">
-    <h2>Team sign in</h2>
+    <h2>橙皮 Stock List</h2>
+    <p class="lead">Sign in with your team account.</p>
     <form id="loginForm">
       <label>Email<input id="email" type="email" required autocomplete="username"></label>
-      <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
+      <label>Password<span class="pw-wrap"><input id="password" type="password" required autocomplete="current-password"><button type="button" class="eye" tabindex="-1" aria-label="Hold to show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg></button></span></label>
       <div class="msg" id="loginMsg"></div>
       <button class="primary" type="submit" id="loginBtn">Sign in</button>
     </form>
+    <div class="linkrow">
+      <button class="link" type="button" id="createLink">Create Account</button>
+      <button class="link" type="button" id="adminLink">Admin</button>
+    </div>
+  </section>
+
+  <!-- Admin -->
+  <section class="panel" id="adminView" hidden>
+    <div class="admin-head"><h2>Admin</h2><button class="small" id="adminBack">Back to Sign in</button></div>
+    <div class="msg" id="adminMsg"></div>
+    <div class="scroll-x">
+      <table class="acct">
+        <thead><tr><th>Account Email</th><th>Password</th><th>Read<br>Only</th><th>Edit<br>Access</th><th></th><th></th></tr></thead>
+        <tbody id="acctBody"></tbody>
+      </table>
+    </div>
   </section>
 
   <!-- App -->
@@ -143,6 +183,53 @@
   </div>
 </div>
 
+<!-- Create account -->
+<div class="lightbox" id="createModal">
+  <div class="modal-box narrow">
+    <h2>Create Account</h2>
+    <p class="sub" style="margin:-8px 0 14px">Create an account, then confirm it from the email we send you. New accounts start as Read Only.</p>
+    <form class="col-form" id="createForm">
+      <label>Email<input id="cEmail" type="email" required autocomplete="email"></label>
+      <label>Password<span class="pw-wrap"><input id="cPw" type="password" required minlength="6" autocomplete="new-password"><button type="button" class="eye" tabindex="-1" aria-label="Hold to show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg></button></span></label>
+      <label>Confirm password<span class="pw-wrap"><input id="cPw2" type="password" required minlength="6" autocomplete="new-password"><button type="button" class="eye" tabindex="-1" aria-label="Hold to show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg></button></span></label>
+      <div class="msg" id="createMsg" style="min-height:44px"></div>
+      <button class="primary" type="submit" id="createBtn">Create Account</button>
+      <button class="link" type="button" id="createBack">Back to Sign in</button>
+    </form>
+  </div>
+</div>
+
+<!-- Admin password -->
+<div class="lightbox" id="adminPwModal">
+  <div class="modal-box narrow">
+    <h2>Admin</h2>
+    <form class="col-form" id="adminPwForm">
+      <label>Admin password<span class="pw-wrap"><input id="aPw" type="password" required autocomplete="off"><button type="button" class="eye" tabindex="-1" aria-label="Hold to show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg></button></span></label>
+      <div class="msg" id="adminPwMsg"></div>
+      <button class="primary" type="submit" id="adminPwBtn">Enter</button>
+      <button class="link" type="button" id="adminPwCancel">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Admin edit account -->
+<div class="lightbox" id="acctEditModal">
+  <div class="modal-box narrow">
+    <h2>Edit account</h2>
+    <p class="sub" id="acctEditEmail" style="margin:-8px 0 14px"></p>
+    <form class="col-form" id="acctEditForm">
+      <label>New password (leave blank to keep)<span class="pw-wrap"><input id="eNewPw" type="password" minlength="6" autocomplete="new-password"><button type="button" class="eye" tabindex="-1" aria-label="Hold to show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg></button></span></label>
+      <div class="radios">
+        <label><input type="radio" name="erole" value="read"> Read Only</label>
+        <label><input type="radio" name="erole" value="edit"> Edit Access</label>
+      </div>
+      <div class="msg" id="acctEditMsg"></div>
+      <button class="primary" type="submit" id="acctEditSave">Save</button>
+      <button class="link" type="button" id="acctEditCancel">Cancel</button>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://mhdxkwmjrquvvzpwolxx.supabase.co';
@@ -156,6 +243,15 @@ let items = [];
 let editingId = null;
 let canEdit = false;
 let channel = null;
+let adminOpen = false;
+let adminPw = '';
+function show(v){
+  $('loginView').hidden = v !== 'login';
+  $('appView').hidden = v !== 'app';
+  $('adminView').hidden = v !== 'admin';
+  $('tools').hidden = v !== 'app';
+  if(v !== 'app') $('roTag').hidden = true;
+}
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeUrl(u){ try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch(e){ return ''; } }
@@ -166,13 +262,19 @@ function legacyItems(){
 /* ---------- auth ---------- */
 async function showForSession(session){
   if(!session){
-    $('loginView').hidden = false; $('appView').hidden = true; $('tools').hidden = true;
+    if(!adminOpen) show('login');
     if(channel){ sb.removeChannel(channel); channel = null; }
     return;
   }
-  $('loginView').hidden = true; $('appView').hidden = false; $('tools').hidden = false;
-  const { data: ce } = await sb.rpc('can_edit');
-  canEdit = ce === true;
+  const { data: role } = await sb.rpc('orange_my_role');
+  if(!role){
+    await sb.auth.signOut();
+    $('loginMsg').textContent = 'This account has no access to this list. Please contact the admin.';
+    return;
+  }
+  canEdit = role === 'edit';
+  adminOpen = false; show('app');
+  $('roTag').hidden = canEdit;
   $('who').innerHTML = esc(session.user.email) + `<span class="badge">${canEdit ? 'Can edit' : 'View only'}</span>`;
   $('addNewBtn').hidden = !canEdit;
   resetForm();
@@ -189,7 +291,7 @@ $('loginForm').addEventListener('submit', async e=>{
   $('loginBtn').disabled = false;
   if(error) $('loginMsg').textContent = error.message;
 });
-$('signOutBtn').addEventListener('click', ()=> sb.auth.signOut());
+$('signOutBtn').addEventListener('click', ()=>{ $('loginMsg').textContent=''; sb.auth.signOut(); });
 sb.auth.onAuthStateChange((evt, session)=>{
   if(evt === 'INITIAL_SESSION' || evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') setTimeout(()=>showForSession(session),0);
 });
@@ -290,6 +392,108 @@ function openPic(it){
   const url = safeUrl(it.pic_url);
   if(url) window.open(url, '_blank', 'noopener');
 }
+
+
+/* ---------- hold-to-show password eye ---------- */
+document.querySelectorAll('.pw-wrap').forEach(w=>{
+  const input = w.querySelector('input'), btn = w.querySelector('.eye');
+  const on = e=>{ e.preventDefault(); input.type = 'text'; };
+  const off = ()=>{ input.type = 'password'; };
+  btn.addEventListener('pointerdown', on);
+  ['pointerup','pointerleave','pointercancel','blur'].forEach(ev=>btn.addEventListener(ev, off));
+  btn.addEventListener('contextmenu', e=>e.preventDefault());
+});
+
+/* ---------- modal helpers ---------- */
+const openM = id => $(id).classList.add('open');
+const closeM = id => $(id).classList.remove('open');
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ resetForm(); closeForm(); ['createModal','adminPwModal','acctEditModal'].forEach(closeM); }
+});
+
+/* ---------- create account ---------- */
+$('createLink').addEventListener('click', ()=>{ $('createForm').reset(); $('createMsg').textContent=''; $('createMsg').style.color=''; openM('createModal'); });
+$('createBack').addEventListener('click', ()=>closeM('createModal'));
+$('createForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const msg = $('createMsg'); msg.style.color = '';
+  if($('cPw').value !== $('cPw2').value){ msg.textContent = 'Passwords do not match.'; return; }
+  $('createBtn').disabled = true;
+  const { error } = await sb.auth.signUp({
+    email: $('cEmail').value.trim(), password: $('cPw').value,
+    options: { emailRedirectTo: location.origin + location.pathname }
+  });
+  $('createBtn').disabled = false;
+  if(error){ msg.textContent = error.message; return; }
+  msg.style.color = '#3f7d4a';
+  msg.textContent = 'Account created. Please check your email and click the confirmation link, then sign in.';
+  $('createForm').querySelectorAll('input').forEach(i=>i.value='');
+});
+
+/* ---------- admin ---------- */
+async function adm(fn, args={}){
+  const { data, error } = await sb.rpc(fn, { pw: adminPw, ...args });
+  return error ? { error: error.message } : data;
+}
+$('adminLink').addEventListener('click', ()=>{ $('aPw').value=''; $('adminPwMsg').textContent=''; openM('adminPwModal'); setTimeout(()=>$('aPw').focus(),50); });
+$('adminPwCancel').addEventListener('click', ()=>closeM('adminPwModal'));
+$('adminPwForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  $('adminPwBtn').disabled = true;
+  adminPw = $('aPw').value;
+  const r = await adm('orange_admin_login');
+  $('adminPwBtn').disabled = false;
+  if(r.error){ adminPw = ''; $('adminPwMsg').textContent = r.error; return; }
+  closeM('adminPwModal'); $('aPw').value = '';
+  adminOpen = true; show('admin'); loadAccounts();
+});
+$('adminBack').addEventListener('click', ()=>{ adminOpen = false; adminPw = ''; $('acctBody').innerHTML=''; show('login'); });
+
+let accounts = [];
+async function loadAccounts(){
+  $('adminMsg').textContent = '';
+  const r = await adm('orange_admin_list');
+  if(r.error){ $('adminMsg').textContent = r.error; return; }
+  accounts = r.rows;
+  $('acctBody').innerHTML = accounts.length ? accounts.map(a=>`
+    <tr>
+      <td>${esc(a.email)}</td>
+      <td title="Passwords are stored encrypted and cannot be shown. Use Edit to set a new one.">••••••••</td>
+      <td><input type="checkbox" ${a.can_edit?'':'checked'} tabindex="-1"></td>
+      <td><input type="checkbox" ${a.can_edit?'checked':''} tabindex="-1"></td>
+      <td><button class="small" data-a="edit" data-id="${a.user_id}">Edit</button></td>
+      <td><button class="small" data-a="del" data-id="${a.user_id}">Delete</button></td>
+    </tr>`).join('') : '<tr><td colspan="6" style="color:var(--muted)">No accounts yet.</td></tr>';
+}
+let editingAcct = null;
+$('acctBody').addEventListener('click', async e=>{
+  const b = e.target.closest('button[data-a]'); if(!b) return;
+  const a = accounts.find(x=>x.user_id === b.dataset.id); if(!a) return;
+  if(b.dataset.a === 'edit'){
+    editingAcct = a;
+    $('acctEditEmail').textContent = a.email; $('eNewPw').value=''; $('acctEditMsg').textContent='';
+    document.querySelector(`input[name=erole][value=${a.can_edit?'edit':'read'}]`).checked = true;
+    openM('acctEditModal');
+  } else if(confirm(`Delete ${a.email}? This account will no longer be able to sign in to this list.`)){
+    const r = await adm('orange_admin_delete', { uid: a.user_id });
+    if(r.error){ $('adminMsg').textContent = r.error; return; }
+    loadAccounts();
+  }
+});
+$('acctEditCancel').addEventListener('click', ()=>closeM('acctEditModal'));
+$('acctEditForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const a = editingAcct, msg = $('acctEditMsg'); msg.textContent = '';
+  const newPw = $('eNewPw').value;
+  const wantEdit = document.querySelector('input[name=erole]:checked').value === 'edit';
+  $('acctEditSave').disabled = true;
+  let r = { ok:true };
+  if(newPw) r = await adm('orange_admin_set_password', { uid: a.user_id, newpw: newPw });
+  if(!r.error && wantEdit !== a.can_edit) r = await adm('orange_admin_set_role', { uid: a.user_id, edit: wantEdit });
+  $('acctEditSave').disabled = false;
+  if(r.error){ msg.textContent = r.error; return; }
+  closeM('acctEditModal'); loadAccounts();
+});
 
 /* ---------- export ---------- */
 $('exportBtn').addEventListener('click', ()=>{
