@@ -634,13 +634,27 @@ $('recExport').addEventListener('click', ()=>{
 });
 
 /* ---------- export ---------- */
-$('exportBtn').addEventListener('click', ()=>{
-  const out = items.map(({code,name,weight,year,place_of_stock,detail,pic_url})=>({code,name,weight,year,place_of_stock,detail,pic:pic_url}));
-  const blob = new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'orange-peel-stock-' + new Date().toISOString().slice(0,10) + '.json';
-  a.click(); URL.revokeObjectURL(a.href);
+function loadScript(src){
+  return new Promise((res,rej)=>{ const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+}
+$('exportBtn').addEventListener('click', async ()=>{
+  const btn = $('exportBtn'); btn.disabled = true;
+  try{
+    if(!window.XLSX) await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const rows = items.map(i=>({
+      'Code': i.code, 'Name': i.name, 'Weight': i.weight, 'Particular Year': i.year,
+      'Place of Stock': i.place_of_stock || '', 'In-Stock': i.in_stock === false ? 'No' : 'Yes',
+      'Detail': i.detail, 'Picture Link': i.pic_url
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows, { header: ['Code','Name','Weight','Particular Year','Place of Stock','In-Stock','Detail','Picture Link'] });
+    ws['!cols'] = [10,28,12,16,16,10,40,40].map(wch=>({wch}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Stock List');
+    XLSX.writeFile(wb, 'orange-peel-stock-' + new Date().toISOString().slice(0,10) + '.xlsx');
+  }catch(err){
+    alert('Could not create the Excel file. Please check your internet connection and try again.');
+  }
+  btn.disabled = false;
 });
 
 /* ---------- one-time migration of old local-storage data ---------- */
