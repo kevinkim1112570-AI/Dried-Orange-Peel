@@ -1,6 +1,6 @@
 # 橙皮 Stock List
 
-Single-page liquid stock register (Code, Name, Weight, Particular Year, Detail, Pic) with live team data in Supabase.
+Single-page liquid stock register (Code, Name, Weight, Particular Year, Place of Stock, Detail, Pic) with live team data in Supabase.
 
 - Table: `public.orange_peel_stock` (codes OP001, OP002… are assigned by a database trigger)
 - Access: team sign-in (Supabase Auth). Everyone in `app_user_roles` can view; only users with `can_edit = true` can add, edit or delete.

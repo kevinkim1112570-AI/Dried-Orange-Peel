@@ -36,8 +36,10 @@
   input,textarea{font:inherit;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfaf8;outline:none;width:100%}
   input:focus,textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
   input[readonly]{color:var(--accent-dark);font-weight:700;background:var(--accent-soft);border-color:var(--accent-soft)}
-  .f-code{grid-column:span 1}.f-name{grid-column:span 3}.f-weight{grid-column:span 1}.f-year{grid-column:span 1}
+  .f-code{grid-column:span 2}.f-name{grid-column:span 4}.f-weight,.f-year,.f-place{grid-column:span 2}
   .f-detail{grid-column:span 6}.f-pic{grid-column:span 6}
+  .modal-box{background:#fff;border-radius:18px;padding:24px;max-width:760px;width:100%;max-height:92vh;overflow:auto}
+  .modal-box h2{margin:0 0 16px;font-size:22px}
   textarea{min-height:76px;resize:vertical}
   .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
 
@@ -75,7 +77,7 @@
 
   @media(max-width:720px){
     form.stock{grid-template-columns:repeat(2,1fr)}
-    .f-code,.f-weight,.f-year{grid-column:span 1}.f-name,.f-detail,.f-pic,.actions{grid-column:span 2}
+    .f-code,.f-weight,.f-year,.f-place{grid-column:span 1}.f-name,.f-detail,.f-pic,.actions{grid-column:span 2}
     h1{font-size:28px}
   }
 </style>
@@ -89,6 +91,7 @@
     </div>
     <div class="tools" id="tools" hidden>
       <span class="who" id="who"></span>
+      <button id="addNewBtn" class="primary" hidden>Add New</button>
       <button id="exportBtn" class="small">Export</button>
       <button id="signOutBtn" class="small">Sign out</button>
     </div>
@@ -112,13 +115,15 @@
       <button class="small primary" id="migrateBtn">Upload to team list</button>
     </div>
 
-    <section class="panel" id="formPanel">
+    <div class="lightbox" id="formModal">
+     <div class="modal-box">
       <h2 id="formTitle">Add new item</h2>
       <form class="stock" id="form" autocomplete="off">
         <label class="f-code">Code<input id="code" readonly placeholder="Auto"></label>
         <label class="f-name">Name<input id="name" required placeholder="e.g. 橙皮糖浆 Orange Peel Syrup"></label>
         <label class="f-weight">Weight<input id="weight" placeholder="e.g. 700 ml"></label>
         <label class="f-year">Particular Year<input id="year" placeholder="e.g. 2021"></label>
+        <label class="f-place">Place of Stock<input id="place" placeholder="e.g. Shelf A2"></label>
         <label class="f-detail">Detail<textarea id="detail" placeholder="Notes, origin, batch, condition…"></textarea></label>
         <label class="f-pic">Picture Link<input id="pic" type="url" placeholder="https://…"></label>
         <div class="actions">
@@ -127,7 +132,8 @@
           <button type="submit" class="primary" id="saveBtn">Add item</button>
         </div>
       </form>
-    </section>
+     </div>
+    </div>
 
     <div class="bar">
       <input id="search" type="search" placeholder="Search code, name, year, detail…">
@@ -175,7 +181,7 @@ async function showForSession(session){
   const { data: ce } = await sb.rpc('can_edit');
   canEdit = ce === true;
   $('who').innerHTML = esc(session.user.email) + `<span class="badge">${canEdit ? 'Can edit' : 'View only'}</span>`;
-  $('formPanel').hidden = !canEdit;
+  $('addNewBtn').hidden = !canEdit;
   resetForm();
   await load();
   checkLegacy();
@@ -204,10 +210,10 @@ async function load(){
 }
 function render(){
   const q = $('search').value.trim().toLowerCase();
-  const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.detail].join(' ').toLowerCase().includes(q));
+  const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.place_of_stock,i.detail].join(' ').toLowerCase().includes(q));
   $('count').textContent = `${shown.length} of ${items.length} items`;
   if(!shown.length){
-    $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet.' + (canEdit ? ' Add your first item above.' : '')}</div>`;
+    $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet.' + (canEdit ? ' Click Add New to add your first item.' : '')}</div>`;
     return;
   }
   $('list').innerHTML = shown.map(i => `
@@ -217,6 +223,7 @@ function render(){
       <div class="meta">
         <div><small>Weight</small><b>${esc(i.weight) || '—'}</b></div>
         <div><small>Year</small><b>${esc(i.year) || '—'}</b></div>
+        <div><small>Place of Stock</small><b>${esc(i.place_of_stock) || '—'}</b></div>
       </div>
       <div class="detail">${esc(i.detail)}</div>
       <div class="row">
@@ -244,6 +251,7 @@ $('form').addEventListener('submit', async e=>{
     name: $('name').value.trim(),
     weight: $('weight').value.trim(),
     year: $('year').value.trim(),
+    place_of_stock: $('place').value.trim(),
     detail: $('detail').value.trim(),
     pic_url: $('pic').value.trim()
   };
@@ -254,9 +262,13 @@ $('form').addEventListener('submit', async e=>{
     : await sb.from(TABLE).insert(rec);
   $('saveBtn').disabled = false;
   if(error){ $('formMsg').textContent = error.message; return; }
-  resetForm(); load();
+  resetForm(); closeForm(); load();
 });
-$('cancelBtn').addEventListener('click', resetForm);
+$('cancelBtn').addEventListener('click', ()=>{ resetForm(); closeForm(); });
+$('addNewBtn').addEventListener('click', ()=>{ resetForm(); openForm(); });
+function openForm(){ $('formModal').classList.add('open'); setTimeout(()=>$('name').focus(),50); }
+function closeForm(){ $('formModal').classList.remove('open'); }
+$('formModal').addEventListener('mousedown', e=>{ if(e.target === $('formModal')){ resetForm(); closeForm(); } });
 $('search').addEventListener('input', render);
 
 $('list').addEventListener('click', async e=>{
@@ -266,11 +278,11 @@ $('list').addEventListener('click', async e=>{
   if(b.dataset.act === 'edit'){
     editingId = it.id;
     $('code').value = it.code; $('name').value = it.name; $('weight').value = it.weight;
-    $('year').value = it.year; $('detail').value = it.detail; $('pic').value = it.pic_url;
+    $('year').value = it.year; $('place').value = it.place_of_stock || ''; $('detail').value = it.detail; $('pic').value = it.pic_url;
     $('formTitle').textContent = 'Edit ' + it.code;
     $('saveBtn').textContent = 'Save changes';
     $('cancelBtn').hidden = false;
-    window.scrollTo({top:0,behavior:'smooth'});
+    openForm();
   }
   if(b.dataset.act === 'del' && confirm(`Delete ${it.code} · ${it.name}?`)){
     const { error } = await sb.from(TABLE).delete().eq('id', it.id);
@@ -293,11 +305,11 @@ function openPic(it){
 function closeLb(){ $('lb').classList.remove('open'); $('lbBody').innerHTML=''; }
 $('lbClose').addEventListener('click', closeLb);
 $('lb').addEventListener('click', e=>{ if(e.target === $('lb')) closeLb(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLb(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeLb(); resetForm(); closeForm(); } });
 
 /* ---------- export ---------- */
 $('exportBtn').addEventListener('click', ()=>{
-  const out = items.map(({code,name,weight,year,detail,pic_url})=>({code,name,weight,year,detail,pic:pic_url}));
+  const out = items.map(({code,name,weight,year,place_of_stock,detail,pic_url})=>({code,name,weight,year,place_of_stock,detail,pic:pic_url}));
   const blob = new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
