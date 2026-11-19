@@ -218,7 +218,7 @@
      <div class="modal-box">
       <h2 id="formTitle">Add new item</h2>
       <form class="stock" id="form" autocomplete="off">
-        <label class="f-code">Code<input id="code" readonly placeholder="Auto"></label>
+        <label class="f-code">Code<input id="code" readonly></label>
         <label class="f-name">Name<input id="name" required placeholder="e.g. 新会橙皮"></label>
         <label class="f-weight">Weight<input id="weight" placeholder="e.g. 500g"></label>
         <label class="f-year">Particular Year<input id="year" placeholder="e.g. 2021"></label>
@@ -367,6 +367,7 @@ async function load(){
   const { data, error } = await sb.from(TABLE).select('*').order('code',{ascending:true});
   if(error){ $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">Could not load data: ${esc(error.message)}</div>`; return; }
   items = data.sort((a,b)=>a.code.localeCompare(b.code,undefined,{numeric:true}));
+  if(!editingId) $('code').value = nextCode();
   render();
 }
 function render(){
@@ -396,10 +397,14 @@ function render(){
     </article>`).join('');
 }
 
+function nextCode(){
+  const max = items.reduce((m,i)=>{ const n = parseInt(String(i.code).replace(/\D/g,''),10); return isNaN(n) ? m : Math.max(m,n); },0);
+  return 'OP' + String(max+1).padStart(3,'0');
+}
 function resetForm(){
   editingId = null;
   $('form').reset();
-  $('code').value = '';
+  $('code').value = nextCode();
   $('formMsg').textContent = '';
   $('formTitle').textContent = 'Add new item';
   $('saveBtn').textContent = 'Add item';
