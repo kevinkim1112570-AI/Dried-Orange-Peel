@@ -144,6 +144,30 @@
     .f-code,.f-weight,.f-year,.f-place{grid-column:span 1}.f-name,.f-detail,.f-pic,.f-stock,.actions{grid-column:span 2}
     h1{font-size:28px}
   }
+  /* print: wrapper is invisible on screen */
+  table.pw,table.pw thead,table.pw tbody,table.pw tr,table.pw td{display:block;border:0;padding:0}
+  .ph{display:none}
+  @media print{
+    @page{size:A4;margin:12mm}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body,body.bg-login{background:#fff!important;font-size:12px}
+    .corners,header,.notice,.bar input,.row,.lightbox,#loginView,#adminView,#recordView{display:none!important}
+    .wrap{padding:0;max-width:none}
+    .bar{margin:0 0 8px}
+    table.pw{display:table;width:100%;border-collapse:collapse}
+    table.pw thead{display:table-header-group}
+    table.pw tbody{display:table-row-group}
+    table.pw tr{display:table-row}
+    table.pw td{display:table-cell}
+    .ph{display:block;font-size:22px;font-weight:700;padding:0 0 8px;margin-bottom:10px;border-bottom:2px solid var(--accent)}
+    .ph span{color:var(--accent)}
+    .grid{display:block}
+    .card{display:inline-flex;width:31.8%;margin:0 1% 12px 0;vertical-align:top;box-shadow:none;padding:12px;border-radius:10px;
+      break-inside:avoid;page-break-inside:avoid}
+    .name{font-size:16px}
+    .meta b{font-size:14px}.meta small{font-size:10px}
+    .detail{font-size:12px}
+  }
 </style>
 </head>
 <body class="bg-login">
@@ -246,7 +270,10 @@
       <input id="search" type="search" placeholder="Search code, name, year, detail, stock out…">
       <span class="count" id="count"></span>
     </div>
-    <div class="grid" id="list"></div>
+    <table class="pw">
+      <thead><tr><td><div class="ph"><span>橙皮</span> Stock List</div></td></tr></thead>
+      <tbody><tr><td><div class="grid" id="list"></div></td></tr></tbody>
+    </table>
   </div>
 </div>
 
