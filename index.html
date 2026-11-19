@@ -143,13 +143,6 @@
   </div>
 </div>
 
-<div class="lightbox" id="lb">
-  <div class="lb-box">
-    <div class="lb-head"><b id="lbTitle"></b><button class="small" id="lbClose">Close</button></div>
-    <div id="lbBody"></div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://mhdxkwmjrquvvzpwolxx.supabase.co';
@@ -292,20 +285,11 @@ $('list').addEventListener('click', async e=>{
   }
 });
 
-/* ---------- picture preview ---------- */
+/* ---------- picture link ---------- */
 function openPic(it){
   const url = safeUrl(it.pic_url);
-  $('lbTitle').textContent = `${it.code} · ${it.name}`;
-  $('lbBody').innerHTML = `<img alt="${esc(it.name)}" src="${esc(url)}">`;
-  $('lbBody').querySelector('img').onerror = () => {
-    $('lbBody').innerHTML = `<div class="lb-fail">Preview unavailable for this link.<br><a href="${esc(url)}" target="_blank" rel="noopener">Open link in new tab ↗</a></div>`;
-  };
-  $('lb').classList.add('open');
+  if(url) window.open(url, '_blank', 'noopener');
 }
-function closeLb(){ $('lb').classList.remove('open'); $('lbBody').innerHTML=''; }
-$('lbClose').addEventListener('click', closeLb);
-$('lb').addEventListener('click', e=>{ if(e.target === $('lb')) closeLb(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeLb(); resetForm(); closeForm(); } });
 
 /* ---------- export ---------- */
 $('exportBtn').addEventListener('click', ()=>{
