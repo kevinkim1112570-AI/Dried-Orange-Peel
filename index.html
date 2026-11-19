@@ -116,7 +116,10 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
   .card:hover{box-shadow:0 6px 22px rgba(60,40,10,.07)}
-  .code{align-self:flex-end;background:var(--accent-soft);color:var(--accent-dark);font-weight:700;font-size:15px;padding:3px 12px;border-radius:999px;letter-spacing:.5px}
+  .top{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+  .so{border:2px solid #d33a2c;color:#d33a2c;border-radius:8px;font-weight:700;font-size:14px;padding:1px 10px;letter-spacing:.3px}
+  .card.out .meta div:nth-child(-n+2) b,.card.out .detail{color:#bdb9b1}
+  .code{background:var(--accent-soft);color:var(--accent-dark);font-weight:700;font-size:15px;padding:3px 12px;border-radius:999px;letter-spacing:.5px}
   .name{font-size:24px;font-weight:700;line-height:1.25;margin:2px 0}
   .meta{display:flex;gap:22px}
   .meta div{display:flex;flex-direction:column}
@@ -385,7 +388,7 @@ function render(){
   }
   $('list').innerHTML = shown.map(i => `
     <article class="card${i.in_stock === false ? ' out' : ''}">
-      <span class="code">${esc(i.code)}</span>
+      <div class="top">${i.in_stock === false ? '<span class="so">Stock Out</span>' : ''}<span class="code">${esc(i.code)}</span></div>
       <div class="name">${esc(i.name)}</div>
       <div class="meta">
         <div><small>Weight</small><b>${esc(i.weight) || '—'}</b></div>
