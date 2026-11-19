@@ -312,8 +312,7 @@ function show(v){
   $('recordView').hidden = v !== 'record';
   $('tools').hidden = v !== 'app' && v !== 'record';
   const rec = v === 'record';
-  $('signOutBtn').disabled = rec;
-  $('signOutBtn').title = rec ? 'Go back to the Stock List to sign out' : '';
+  $('signOutBtn').hidden = rec;
   $('recordBtn').hidden = rec; $('exportBtn').hidden = rec;
   $('addNewBtn').hidden = rec || !canEdit;
   if(v !== 'app' && v !== 'record') $('roTag').hidden = true;
@@ -343,7 +342,7 @@ async function showForSession(session){
   canEdit = role === 'edit';
   adminOpen = false; show('app');
   $('roTag').hidden = canEdit;
-  $('who').innerHTML = esc(session.user.email) + `<span class="badge">${canEdit ? 'Can edit' : 'View only'}</span>`;
+  $('who').innerHTML = esc(session.user.email) + `${canEdit ? '' : '<span class="badge">Read Only</span>'}`;
   resetForm();
   await load();
   checkLegacy();
