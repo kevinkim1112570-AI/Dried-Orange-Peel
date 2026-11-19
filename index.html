@@ -235,7 +235,7 @@
         <label class="f-pic">Picture Link<input id="pic" type="url" placeholder="https://…"></label>
         <div class="actions">
           <div class="msg" id="formMsg" style="margin-right:auto"></div>
-          <button type="button" id="cancelBtn" hidden>Cancel</button>
+          <button type="button" id="cancelBtn">Cancel</button>
           <button type="submit" class="primary" id="saveBtn">Add item</button>
         </div>
       </form>
@@ -416,7 +416,6 @@ function resetForm(){
   $('formMsg').textContent = '';
   $('formTitle').textContent = 'Add new item';
   $('saveBtn').textContent = 'Add item';
-  $('cancelBtn').hidden = true;
 }
 
 $('form').addEventListener('submit', async e=>{
