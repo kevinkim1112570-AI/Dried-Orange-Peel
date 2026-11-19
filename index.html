@@ -243,7 +243,7 @@
     </div>
 
     <div class="bar">
-      <input id="search" type="search" placeholder="Search code, name, year, detail…">
+      <input id="search" type="search" placeholder="Search code, name, year, detail, stock out…">
       <span class="count" id="count"></span>
     </div>
     <div class="grid" id="list"></div>
@@ -380,7 +380,7 @@ async function load(){
 }
 function render(){
   const q = $('search').value.trim().toLowerCase();
-  const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.place_of_stock,i.detail].join(' ').toLowerCase().includes(q));
+  const shown = items.filter(i => !q || [i.code,i.name,i.weight,i.year,i.place_of_stock,i.detail,i.in_stock === false ? 'stock out' : 'in-stock'].join(' ').toLowerCase().includes(q));
   $('count').textContent = `${shown.length} of ${items.length} items`;
   if(!shown.length){
     $('list').innerHTML = `<div class="empty" style="grid-column:1/-1">${items.length ? 'No matching items.' : 'No stock yet.' + (canEdit ? ' Click Add New to add your first item.' : '')}</div>`;
