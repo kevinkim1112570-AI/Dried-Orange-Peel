@@ -47,7 +47,15 @@
   textarea{min-height:76px;resize:vertical}
   .actions{grid-column:span 6;display:flex;gap:10px;justify-content:flex-end}
 
-  body.bg-login{background:#fdf1e2 url('/icons/login-bg.jpg') center/cover no-repeat fixed}
+  body.bg-login{background:#fdf1e1}
+  .corners{display:none}
+  body.bg-login .corners{display:block}
+  .corners i{position:fixed;width:clamp(110px,24vw,380px);aspect-ratio:380/350;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none;z-index:0}
+  .corners .tl{top:0;left:0;background-image:url('/icons/corner-tl.png')}
+  .corners .tr{top:0;right:0;background-image:url('/icons/corner-tr.png')}
+  .corners .bl{bottom:0;left:0;background-image:url('/icons/corner-bl.png')}
+  .corners .br{bottom:0;right:0;background-image:url('/icons/corner-br.png')}
+  body.bg-login .wrap{position:relative;z-index:1}
   body.bg-login header{display:none}
   body.bg-login .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px}
   body.bg-login .login{margin:0;width:100%;box-shadow:0 12px 40px rgba(120,70,20,.15)}
@@ -114,6 +122,7 @@
 </style>
 </head>
 <body class="bg-login">
+<div class="corners" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
 <div class="wrap">
   <header>
     <div>
