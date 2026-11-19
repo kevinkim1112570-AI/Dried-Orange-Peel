@@ -80,6 +80,19 @@
   table.acct th:first-child,table.acct td:first-child{text-align:left}
   table.acct input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);pointer-events:none}
   .scroll-x{overflow-x:auto}
+  .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .filters input,.filters select{width:auto;min-width:150px;padding:10px 12px}
+  .filters input[type=search]{flex:1;min-width:220px}
+  .filters label{flex-direction:row;align-items:center;gap:8px}
+  select{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:12px;background:#fbfaf8;outline:none}
+  select:focus{border-color:var(--accent)}
+  table.rec{width:100%;border-collapse:collapse;font-size:16px}
+  table.rec th{text-align:left;padding:10px 10px;border-bottom:2px solid var(--ink);white-space:nowrap}
+  table.rec th.sortable{cursor:pointer}
+  table.rec td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.rec td.d{white-space:nowrap}
+  table.rec td.act{white-space:nowrap;font-weight:600;color:var(--accent-dark)}
+  table.rec td.det{white-space:pre-wrap;word-break:break-word;min-width:260px}
   .radios{display:flex;gap:22px;flex-wrap:wrap}
   .radios label{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:17px}
   .radios input{width:auto}
@@ -136,6 +149,7 @@
     </div>
     <div class="tools" id="tools" hidden>
       <span class="who" id="who"></span>
+      <button id="recordBtn" class="small">Record</button>
       <button id="addNewBtn" class="primary" hidden>Add New</button>
       <button id="exportBtn" class="small">Export</button>
       <button id="signOutBtn" class="small">Sign out</button>
@@ -166,6 +180,29 @@
       <table class="acct">
         <thead><tr><th>Account Email</th><th>Password</th><th>Read<br>Only</th><th>Edit<br>Access</th><th></th><th></th></tr></thead>
         <tbody id="acctBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Record -->
+  <section class="panel" id="recordView" hidden>
+    <div class="admin-head">
+      <h2>Stock Modification Record</h2>
+      <div class="tools"><button class="small" id="recBack">Back to Stock List</button><button class="small primary" id="recExport">Export CSV</button></div>
+    </div>
+    <div class="filters">
+      <input type="search" id="rSearch" placeholder="Search operator, action, details…">
+      <select id="rAction"><option value="">All actions</option></select>
+      <select id="rUser"><option value="">All operators</option></select>
+      <label>From <input type="date" id="rFrom"></label>
+      <label>To <input type="date" id="rTo"></label>
+      <button class="small" id="rClear">Clear</button>
+    </div>
+    <div class="count" id="rCount" style="margin-bottom:10px"></div>
+    <div class="scroll-x">
+      <table class="rec">
+        <thead><tr><th class="sortable" id="rSort">Date ↓</th><th>Operator Email</th><th>Action</th><th>Details</th></tr></thead>
+        <tbody id="recBody"></tbody>
       </table>
     </div>
   </section>
@@ -272,8 +309,15 @@ function show(v){
   $('loginView').hidden = v !== 'login';
   $('appView').hidden = v !== 'app';
   $('adminView').hidden = v !== 'admin';
-  $('tools').hidden = v !== 'app';
-  if(v !== 'app') $('roTag').hidden = true;
+  $('recordView').hidden = v !== 'record';
+  $('tools').hidden = v !== 'app' && v !== 'record';
+  const rec = v === 'record';
+  $('signOutBtn').disabled = rec;
+  $('signOutBtn').title = rec ? 'Go back to the Stock List to sign out' : '';
+  $('recordBtn').hidden = rec; $('exportBtn').hidden = rec;
+  $('addNewBtn').hidden = rec || !canEdit;
+  if(v !== 'app' && v !== 'record') $('roTag').hidden = true;
+  else $('roTag').hidden = canEdit;
   document.body.classList.toggle('bg-login', v === 'login');
 }
 
@@ -300,7 +344,6 @@ async function showForSession(session){
   adminOpen = false; show('app');
   $('roTag').hidden = canEdit;
   $('who').innerHTML = esc(session.user.email) + `<span class="badge">${canEdit ? 'Can edit' : 'View only'}</span>`;
-  $('addNewBtn').hidden = !canEdit;
   resetForm();
   await load();
   checkLegacy();
@@ -517,6 +560,65 @@ $('acctEditForm').addEventListener('submit', async e=>{
   $('acctEditSave').disabled = false;
   if(r.error){ msg.textContent = r.error; return; }
   closeM('acctEditModal'); loadAccounts();
+});
+
+
+/* ---------- Stock Modification Record ---------- */
+let logs = [], logDesc = true, logChannel = null;
+const fmtDate = iso => { const d = new Date(iso), p = n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+const dayKey = iso => fmtDate(iso).slice(0,10);
+
+async function loadLogs(){
+  let all = [], from = 0;
+  for(;;){
+    const { data, error } = await sb.from('orange_peel_log').select('*').order('created_at',{ascending:false}).range(from, from+999);
+    if(error){ $('rCount').textContent = 'Could not load records: ' + error.message; return; }
+    all = all.concat(data);
+    if(data.length < 1000) break;
+    from += 1000;
+  }
+  logs = all;
+  const keep = (id, vals) => { const el = $(id), cur = el.value, first = el.options[0].outerHTML;
+    el.innerHTML = first + vals.map(v=>`<option>${esc(v)}</option>`).join(''); el.value = vals.includes(cur) ? cur : ''; };
+  keep('rAction', [...new Set(logs.map(l=>l.action))].sort());
+  keep('rUser', [...new Set(logs.map(l=>l.user_email))].sort());
+  renderLogs();
+}
+function filteredLogs(){
+  const q = $('rSearch').value.trim().toLowerCase(), act = $('rAction').value, usr = $('rUser').value,
+        f = $('rFrom').value, t = $('rTo').value;
+  const list = logs.filter(l =>
+    (!act || l.action === act) && (!usr || l.user_email === usr) &&
+    (!f || dayKey(l.created_at) >= f) && (!t || dayKey(l.created_at) <= t) &&
+    (!q || [fmtDate(l.created_at), l.user_email, l.action, l.detail].join(' ').toLowerCase().includes(q)));
+  return logDesc ? list : list.slice().reverse();
+}
+function renderLogs(){
+  const list = filteredLogs();
+  $('rCount').textContent = `${list.length} of ${logs.length} records`;
+  $('rSort').textContent = 'Date ' + (logDesc ? '↓' : '↑');
+  $('recBody').innerHTML = list.length ? list.map(l=>`
+    <tr><td class="d">${esc(fmtDate(l.created_at))}</td><td>${esc(l.user_email)}</td>
+    <td class="act">${esc(l.action)}</td><td class="det">${esc(l.detail)}</td></tr>`).join('')
+    : '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:40px">No records.</td></tr>';
+}
+['rSearch','rAction','rUser','rFrom','rTo'].forEach(id=>$(id).addEventListener('input', renderLogs));
+$('rClear').addEventListener('click', ()=>{ ['rSearch','rAction','rUser','rFrom','rTo'].forEach(id=>$(id).value=''); renderLogs(); });
+$('rSort').addEventListener('click', ()=>{ logDesc = !logDesc; renderLogs(); });
+$('recordBtn').addEventListener('click', async ()=>{
+  show('record'); await loadLogs();
+  if(!logChannel) logChannel = sb.channel('orange-log').on('postgres_changes',{event:'INSERT',schema:'public',table:'orange_peel_log'},()=>{ if(!$('recordView').hidden) loadLogs(); }).subscribe();
+});
+$('recBack').addEventListener('click', ()=> show('app'));
+$('recExport').addEventListener('click', ()=>{
+  const q = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
+  const rows = [['Date','Operator Email','Action','Details'], ...logs.map(l=>[fmtDate(l.created_at), l.user_email, l.action, l.detail])];
+  const csv = '﻿' + rows.map(r=>r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'stock-modification-record-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(a.href);
 });
 
 /* ---------- export ---------- */
